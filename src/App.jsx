@@ -612,15 +612,15 @@ function Teacher({ user, profile }) {
 
     setError('');
 
+    // Ambil daftar siswa melalui RPC khusus Guru BK.
+    // Ini menghindari RLS join class_students -> profiles yang sebelumnya
+    // membuat nama siswa tidak muncul di dashboard.
     const [
       { data: studentData, error: studentError },
       { data: entryData, error: entryError },
       { data: followupData, error: followupError },
     ] = await Promise.all([
-      supabase
-        .from('class_students')
-        .select('student_id,profiles(id,full_name)')
-        .eq('class_id', classId),
+      supabase.rpc('get_teacher_students', { p_class_id: classId }),
 
       supabase
         .from('emotion_entries')
@@ -644,7 +644,7 @@ function Teacher({ user, profile }) {
     setStudents(
       (studentData || []).map((item) => ({
         id: item.student_id,
-        name: item.profiles?.full_name || 'Siswa',
+        name: item.full_name || 'Siswa',
       }))
     );
 
