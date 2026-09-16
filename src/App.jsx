@@ -110,7 +110,16 @@ function Auth({ onAuth }) {
       let result;
 
       if (signup) {
-        result = await supabase.auth.signUp({ email, password });
+        result = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              role,
+              full_name: name.trim() || email.trim().split('@')[0],
+            },
+          },
+        });
       } else {
         result = await supabase.auth.signInWithPassword({ email, password });
       }
@@ -122,17 +131,11 @@ function Auth({ onAuth }) {
           throw new Error('Akun belum dibuat.');
         }
 
-        const { error: profileError } = await supabase.from('profiles').upsert({
-          id: result.data.user.id,
-          role,
-          full_name: name.trim() || email.split('@')[0],
-        });
-
-        if (profileError) throw profileError;
-
+        // Profil dibuat otomatis oleh trigger Supabase
+        // setelah user baru masuk ke auth.users.
         if (!result.data.session) {
           setError(
-            'Akun dibuat. Jika verifikasi email aktif, cek email lalu login.'
+            'Akun berhasil dibuat. Silakan cek email untuk verifikasi, lalu login.'
           );
           return;
         }
